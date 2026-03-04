@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Behavior Lab: Data Analytics Edition</title>
+<title>Behavior Lab: Precision Analytics</title>
 <style>
 :root { --neon: #00ffcc; --bg: #0f172a; --accent: #ff007a; }
 body {
@@ -44,8 +44,13 @@ button.main-btn {
 /* STAGE 5: Steady Path Styles */
 .maze-container { position: relative; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; cursor: crosshair; }
 .maze-road { fill: none; stroke: rgba(255, 255, 255, 0.15); stroke-width: 45; stroke-linecap: round; stroke-linejoin: round; }
-.maze-trigger { fill: none; stroke: transparent; stroke-width: 50; pointer-events: stroke; stroke-linecap: round; stroke-linejoin: round; }
-.maze-point { width: 45px; height: 45px; border-radius: 50%; position: absolute; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; z-index: 30; }
+.maze-trigger { fill: none; stroke: transparent; stroke-width: 55; pointer-events: stroke; stroke-linecap: round; stroke-linejoin: round; }
+.maze-point { 
+  width: 50px; height: 50px; border-radius: 50%; position: absolute; 
+  display: flex; align-items: center; justify-content: center; 
+  font-size: 11px; font-weight: bold; z-index: 30; 
+  transform: translate(-50%, -50%); /* จัดให้กึ่งกลางวงกลมตรงกับพิกัดเส้น */
+}
 
 .game-over-flash { animation: flashEffect 0.4s; }
 @keyframes flashEffect { 0%, 100% { background: rgba(0,0,0,0.5); } 50% { background: rgba(255, 0, 68, 0.4); } }
@@ -100,24 +105,21 @@ function percentile(arr,p){
   let l=Math.floor(i), u=Math.ceil(i);
   return l===u ? s[i] : s[l]+(s[u]-s[l])*(i-l);
 }
-
 function removeOutliers(arr){
   if(arr.length < 4) return arr;
   let Q1=percentile(arr,25), Q3=percentile(arr,75);
   let IQR=Q3-Q1;
   return arr.filter(v => v >= (Q1-1.5*IQR) && v <= (Q3+1.5*IQR));
 }
-
 function getStats(raw){
   if(!raw.length) return { mean: 0, std: 0, variance: 0, count: 0 };
   let f = removeOutliers(raw);
   let m = f.reduce((a,b)=>a+b,0)/f.length;
-  // คำนวณความแปรปรวน (Variance)
   let v = f.reduce((a,b)=>a+(b-m)**2,0)/f.length;
   return { 
     mean: Math.round(m), 
     std: Math.round(Math.sqrt(v)), 
-    variance: Math.round(v), // เพิ่ม Variance ลงในฐานข้อมูล
+    variance: Math.round(v), 
     count: f.length 
   };
 }
@@ -139,7 +141,7 @@ function renderStage() {
     document.getElementById("challengeArea").innerHTML = `
       <div class="card">
         <h2>ทดสอบเสร็จสิ้น! 🏆</h2>
-        <p>บันทึกสถิติเพื่อเก็บข้อมูล Variance และค่าสถิติอื่นๆ</p>
+        <p>วิเคราะห์พฤติกรรมเรียบร้อยแล้ว กรุณากดบันทึกสถิติ</p>
       </div>`;
     document.getElementById("exportBtn").style.display = "block";
     return;
@@ -211,7 +213,7 @@ function initMove(cv) {
 }
 
 function initType(cv) {
-  const words = ["ฐานข้อมูล", "พฤติกรรม", "งานวิจัย"];
+  const words = ["ฐานข้อมูล", "กลไกพฤติกรรม", "นวัตกรรม"];
   let idx = 0;
   function update() {
     cv.innerHTML = `<div style="margin-top:60px"><div style="font-size:2rem; color:var(--neon); margin-bottom:15px">${words[idx]}</div><input type="text" id="typer" autofocus autocomplete="off"></div>`;
@@ -230,7 +232,7 @@ function initReflex(cv) {
     setTimeout(() => {
       if(currentStage !== 3) return;
       cv.style.background = "var(--accent)";
-      cv.innerHTML = `<p style="margin-top:140px; font-weight:bold; font-size:1.8rem">คลิก!!!</p>`;
+      cv.innerHTML = `<p style="margin-top:140px; font-weight:bold; font-size:1.8rem">CLICK!!!</p>`;
       cv.onmousedown = () => { cv.onmousedown = null; count++; if(count < 3) next(); else { cv.style.background="transparent"; finishStage(); } };
     }, Math.random() * 2500 + 1000);
   }
@@ -238,14 +240,16 @@ function initReflex(cv) {
 }
 
 function initSteadyPath(cv) {
+  // SVG Path: M (Start) -> H (Horizontal) -> V (Vertical) -> H -> V -> H (Goal)
+  // พิกัดถูกคำนวณให้ Start อยู่ที่ 60,60 และ Goal อยู่ที่ 540,300
   cv.innerHTML = `
     <div class="maze-container" id="mazeCont">
-      <svg width="600" height="360" viewBox="0 0 600 360">
+      <svg width="600" height="360" viewBox="0 0 600 360" style="position:absolute;">
         <path class="maze-road" d="M 60 60 H 540 V 180 H 60 V 300 H 540" />
         <path id="mazeTrigger" class="maze-trigger" d="M 60 60 H 540 V 180 H 60 V 300 H 540" />
       </svg>
-      <div id="start-node" class="maze-point" style="left:38px; top:38px; background:var(--accent);">START</div>
-      <div id="goal-node" class="maze-point" style="right:38px; bottom:38px; background:var(--neon); color:#000;">GOAL</div>
+      <div id="start-node" class="maze-point" style="left:60px; top:60px; background:var(--accent);">START</div>
+      <div id="goal-node" class="maze-point" style="left:540px; top:300px; background:var(--neon); color:#000;">GOAL</div>
     </div>
   `;
   const cont = document.getElementById("mazeCont");
@@ -253,9 +257,13 @@ function initSteadyPath(cv) {
   const goal = document.getElementById("goal-node");
 
   trig.onmouseleave = (e) => {
+    // ตรวจสอบว่าเมาส์หลุดออกไปที่เป้าหมายหรือไม่ ถ้าไม่ใช่คือ "หลุด"
     if(e.relatedTarget !== goal) {
       cont.classList.add("game-over-flash");
-      setTimeout(() => cont.classList.remove("game-over-flash"), 400);
+      setTimeout(() => {
+        cont.classList.remove("game-over-flash");
+        alert("⚠️ มือสั่น! คุณทำเมาส์หลุดจากเส้นทาง กรุณาเริ่มใหม่จากจุด START");
+      }, 50);
     }
   };
 
@@ -270,7 +278,7 @@ async function exportData() {
   const status = document.getElementById("save-status");
   const btn = document.getElementById("exportBtn");
   btn.disabled = true;
-  status.innerText = "⌛ กำลังบันทึกข้อมูลและค่า Variance...";
+  status.innerText = "⌛ กำลังส่งสถิติพร้อมค่า Variance...";
 
   const payload = {
     mouse: getStats(mouseIntervals),
@@ -287,11 +295,11 @@ async function exportData() {
     });
     if (res.ok) {
       status.style.color = "var(--neon)";
-      status.innerText = "สำเร็จ! ตรวจสอบค่า Variance ใน Neon DB ได้เลย ✅";
+      status.innerText = "บันทึกข้อมูลสำเร็จ! ตรวจสอบใน Neon DB ได้เลย ✅";
     } else { throw new Error("Server Error"); }
   } catch (err) {
     status.style.color = "var(--accent)";
-    status.innerText = "❌ ผิดพลาด: " + err.message;
+    status.innerText = "❌ เกิดข้อผิดพลาด: " + err.message;
     btn.disabled = false;
   }
 }
