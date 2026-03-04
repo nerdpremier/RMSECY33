@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Behavior Lab: Steady Hand Challenge</title>
+<title>Behavior Lab: Data Analytics Edition</title>
 <style>
 :root { --neon: #00ffcc; --bg: #0f172a; --accent: #ff007a; }
 body {
@@ -41,7 +41,7 @@ button.main-btn {
 #exportBtn { display: none; margin: 20px auto; background: var(--accent); box-shadow: 0 0 15px var(--accent); }
 #exportBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* STAGE 5: Steady Path - NO LASER CSS */
+/* STAGE 5: Steady Path Styles */
 .maze-container { position: relative; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; cursor: crosshair; }
 .maze-road { fill: none; stroke: rgba(255, 255, 255, 0.15); stroke-width: 45; stroke-linecap: round; stroke-linejoin: round; }
 .maze-trigger { fill: none; stroke: transparent; stroke-width: 50; pointer-events: stroke; stroke-linecap: round; stroke-linejoin: round; }
@@ -92,7 +92,7 @@ setInterval(() => {
   if(idle > 1000) { idleDurations.push(idle); lastActivity = Date.now(); }
 }, 1000);
 
-/* --- STATS CALCULATOR --- */
+/* --- STATS CALCULATOR (WITH VARIANCE) --- */
 function percentile(arr,p){
   let s=[...arr].sort((a,b)=>a-b);
   if(!s.length) return 0;
@@ -100,18 +100,26 @@ function percentile(arr,p){
   let l=Math.floor(i), u=Math.ceil(i);
   return l===u ? s[i] : s[l]+(s[u]-s[l])*(i-l);
 }
+
 function removeOutliers(arr){
   if(arr.length < 4) return arr;
   let Q1=percentile(arr,25), Q3=percentile(arr,75);
   let IQR=Q3-Q1;
   return arr.filter(v => v >= (Q1-1.5*IQR) && v <= (Q3+1.5*IQR));
 }
+
 function getStats(raw){
-  if(!raw.length) return { mean: 0, std: 0, count: 0 };
+  if(!raw.length) return { mean: 0, std: 0, variance: 0, count: 0 };
   let f = removeOutliers(raw);
   let m = f.reduce((a,b)=>a+b,0)/f.length;
+  // คำนวณความแปรปรวน (Variance)
   let v = f.reduce((a,b)=>a+(b-m)**2,0)/f.length;
-  return { mean: Math.round(m), std: Math.round(Math.sqrt(v)), count: f.length };
+  return { 
+    mean: Math.round(m), 
+    std: Math.round(Math.sqrt(v)), 
+    variance: Math.round(v), // เพิ่ม Variance ลงในฐานข้อมูล
+    count: f.length 
+  };
 }
 
 /* --- GAME ENGINE --- */
@@ -120,7 +128,7 @@ const stages = [
   { name: "🛸 Orbital", desc: "ลากเมาส์ตามเป้าหมาย (10 วินาที)", time: 10, type: "move" },
   { name: "⌨️ Speed Typer", desc: "พิมพ์คำที่กำหนดให้ถูกต้อง", type: "type" },
   { name: "⚡ Reflex", desc: "คลิกเมื่อจอเปลี่ยนเป็นสีชมพู (3 ครั้ง)", type: "reflex" },
-  { name: "🖋️ Steady Hand", desc: "ลากเมาส์ตามทางซิกแซก: ห้ามหลุดกรอบสีขาว!", type: "steady_path" }
+  { name: "🖋️ Steady Hand", desc: "ลากเมาส์ตามทาง: ห้ามออกนอกกรอบสีขาว!", type: "steady_path" }
 ];
 
 let currentStage = 0;
@@ -131,7 +139,7 @@ function renderStage() {
     document.getElementById("challengeArea").innerHTML = `
       <div class="card">
         <h2>ทดสอบเสร็จสิ้น! 🏆</h2>
-        <p>คุณทำได้ดีมาก! ข้อมูลพฤติกรรมพร้อมสำหรับการบันทึกแล้ว</p>
+        <p>บันทึกสถิติเพื่อเก็บข้อมูล Variance และค่าสถิติอื่นๆ</p>
       </div>`;
     document.getElementById("exportBtn").style.display = "block";
     return;
@@ -262,7 +270,7 @@ async function exportData() {
   const status = document.getElementById("save-status");
   const btn = document.getElementById("exportBtn");
   btn.disabled = true;
-  status.innerText = "⌛ บันทึกข้อมูล...";
+  status.innerText = "⌛ กำลังบันทึกข้อมูลและค่า Variance...";
 
   const payload = {
     mouse: getStats(mouseIntervals),
@@ -279,7 +287,7 @@ async function exportData() {
     });
     if (res.ok) {
       status.style.color = "var(--neon)";
-      status.innerText = "สำเร็จ! ✅";
+      status.innerText = "สำเร็จ! ตรวจสอบค่า Variance ใน Neon DB ได้เลย ✅";
     } else { throw new Error("Server Error"); }
   } catch (err) {
     status.style.color = "var(--accent)";
