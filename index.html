@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Behavior Lab: Laser Maze Edition</title>
+<title>Behavior Lab: The Zig-Zag Gauntlet</title>
 <style>
 :root { --neon: #00ffcc; --bg: #0f172a; --accent: #ff007a; }
 body {
@@ -46,20 +46,16 @@ input#typer {
   background: transparent; color: white; font-size: 1.5rem; text-align: center; margin-top: 40px; outline: none;
 }
 
-/* STAGE 5: Maze & Laser UI */
+/* STAGE 5: Zig-Zag Maze UI */
 .maze-container { position: relative; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; cursor: crosshair; }
-.maze-road { fill: none; stroke: rgba(255, 255, 255, 0.1); stroke-width: 60; stroke-linecap: round; }
-.maze-trigger { fill: none; stroke: transparent; stroke-width: 70; pointer-events: stroke; }
+.maze-road { fill: none; stroke: rgba(255, 255, 255, 0.1); stroke-width: 50; stroke-linecap: round; stroke-linejoin: round; }
+.maze-trigger { fill: none; stroke: transparent; stroke-width: 55; pointer-events: stroke; stroke-linecap: round; stroke-linejoin: round; }
 .maze-point { width: 50px; height: 50px; border-radius: 50%; position: absolute; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; z-index: 30; }
-#start-node { background: var(--accent); left: 70px; top: 60px; box-shadow: 0 0 15px var(--accent); }
-#goal-node { background: var(--neon); right: 70px; bottom: 60px; color: #000; box-shadow: 0 0 15px var(--neon); }
 
 .laser { position: absolute; background: #ff0000; box-shadow: 0 0 10px #ff0000; z-index: 25; pointer-events: auto; }
-.laser-h { width: 100%; height: 4px; left: 0; }
 .laser-v { width: 4px; height: 100%; top: 0; }
 
-@keyframes laserMoveV { 0%, 100% { left: 35%; } 50% { left: 65%; } }
-@keyframes laserMoveH { 0%, 100% { top: 25%; } 50% { top: 75%; } }
+@keyframes laserMoveV { 0%, 100% { left: 30%; } 50% { left: 70%; } }
 @keyframes laserRotate { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
 .game-over-flash { animation: flashRed 0.4s; }
@@ -73,12 +69,12 @@ input#typer {
 <div class="container">
   <div class="progress-container"><div id="overallBar" class="progress-bar"></div></div>
   <div id="challengeArea"></div>
-  <button id="exportBtn" class="main-btn" onclick="exportData()">💾 ส่งข้อมูลลงฐานข้อมูล Neon</button>
+  <button id="exportBtn" class="main-btn" onclick="exportData()">💾 บันทึกข้อมูลพฤติกรรมลง Neon DB</button>
   <div id="save-status"></div>
 </div>
 
 <script>
-/* --- DATA COLLECTION --- */
+/* --- 1. DATA COLLECTION --- */
 let mouseIntervals=[], clickIntervals=[], keyIntervals=[], idleDurations=[];
 let lastMouse=null, lastClick=null, lastKey=null, lastActivity=Date.now();
 
@@ -103,7 +99,7 @@ setInterval(() => {
   if(idle > 1000) { idleDurations.push(idle); lastActivity = Date.now(); }
 }, 1000);
 
-/* --- STATS MATH --- */
+/* --- 2. STATS CALCULATION --- */
 function percentile(arr,p){
   let s=[...arr].sort((a,b)=>a-b);
   if(s.length === 0) return 0;
@@ -126,25 +122,24 @@ function computeFullStats(raw){
   return { mean: Math.round(m), std: Math.round(Math.sqrt(v)), count: filtered.length };
 }
 
-/* --- STAGES --- */
+/* --- 3. STAGE MANAGER --- */
 const stages = [
-  { name: "Click Hunt", desc: "คลิกเป้าหมาย 10 จุด", type: "click_task" },
-  { name: "Orbital Tracking", desc: "ลากเมาส์ตามเป้าหมายเคลื่อนที่", time: 10, type: "move" },
-  { name: "Speed Typer", desc: "พิมพ์คำที่ปรากฏให้ถูกต้อง", type: "type_task" },
-  { name: "Reaction Test", desc: "คลิกเมื่อหน้าจอเปลี่ยนสี (3 ครั้ง)", type: "reflex_task" },
-  { name: "Neon Maze", desc: "ลากเมาส์ในกรอบสีขาว ห้ามโดนเลเซอร์!", type: "maze_laser" }
+  { name: "Click Hunt", desc: "คลิกเป้าหมาย 10 จุด", type: "click" },
+  { name: "Orbital Tracking", desc: "ลากเมาส์ตามเป้าหมาย (10 วินาที)", time: 10, type: "move" },
+  { name: "Speed Typer", desc: "พิมพ์คำที่กำหนดให้ถูกต้อง", type: "type" },
+  { name: "Reaction Test", desc: "คลิกเมื่อหน้าจอเปลี่ยนเป็นสีชมพู (3 ครั้ง)", type: "reflex" },
+  { name: "Zig-Zag Gauntlet", desc: "ลากเมาส์ตามทางซิกแซก ห้ามหลุดกรอบและห้ามโดนเลเซอร์!", type: "maze" }
 ];
 
 let currentStage = 0;
 let timer = null;
-let timeLeft = 0;
 
 function renderStage() {
   if(currentStage >= stages.length) {
     document.getElementById("challengeArea").innerHTML = `
       <div class="card">
-        <h2>ทดสอบเสร็จสิ้น! 🏆</h2>
-        <p>ข้อมูลพฤติกรรมถูกรวบรวมแล้ว กรุณากดปุ่มบันทึกด้านล่าง</p>
+        <h2>ภารกิจเสร็จสิ้น! 🏆</h2>
+        <p>ประมวลผลสถิติเรียบร้อยแล้ว กรุณากดปุ่มเพื่อส่งข้อมูลเข้าฐานข้อมูลงานวิจัย</p>
       </div>`;
     document.getElementById("exportBtn").style.display = "block";
     return;
@@ -152,12 +147,12 @@ function renderStage() {
   let s = stages[currentStage];
   document.getElementById("challengeArea").innerHTML = `
     <div class="card">
-      <small>ด่านที่ ${currentStage + 1} / ${stages.length}</small>
+      <small>STAGE ${currentStage + 1} / ${stages.length}</small>
       <h2>${s.name}</h2>
       <p>${s.desc}</p>
       <div class="timer" id="timeDisplay">${s.time ? s.time + 's' : '--'}</div>
       <div id="gameCanvas">
-        <button class="main-btn" style="margin-top:140px" onclick="startStage()">Start Mission</button>
+        <button class="main-btn" style="margin-top:140px" onclick="startStage()">เริ่มทดสอบ</button>
       </div>
     </div>`;
 }
@@ -167,14 +162,14 @@ function startStage() {
   const canvas = document.getElementById("gameCanvas");
   canvas.innerHTML = "";
 
-  if(s.type === "click_task") initClick(canvas);
+  if(s.type === "click") initClick(canvas);
   if(s.type === "move") initMove(canvas);
-  if(s.type === "type_task") initType(canvas);
-  if(s.type === "reflex_task") initReflex(canvas);
-  if(s.type === "maze_laser") initMaze(canvas);
+  if(s.type === "type") initType(canvas);
+  if(s.type === "reflex") initReflex(canvas);
+  if(s.type === "maze") initMaze(canvas);
 
   if(s.time) {
-    timeLeft = s.time;
+    let timeLeft = s.time;
     timer = setInterval(() => {
       timeLeft--;
       document.getElementById("timeDisplay").innerText = timeLeft + "s";
@@ -184,17 +179,17 @@ function startStage() {
 }
 
 function finishStage() {
-    clearInterval(timer);
-    currentStage++;
-    document.getElementById("overallBar").style.width = (currentStage/stages.length*100) + "%";
-    renderStage();
+  clearInterval(timer);
+  currentStage++;
+  document.getElementById("overallBar").style.width = (currentStage/stages.length*100) + "%";
+  renderStage();
 }
 
-/* STAGE IMPLEMENTATIONS */
+/* --- STAGE FUNCTIONS --- */
 function initClick(cv) {
   let count = 0;
   function spawn() {
-    cv.innerHTML = `<div style="padding:15px">Score: ${count}/10</div>`;
+    cv.innerHTML = `<div style="padding:15px">Progress: ${count}/10</div>`;
     let t = document.createElement("div"); t.className = "target";
     t.style.left = Math.random()*85+"%"; t.style.top = Math.random()*60+20+"%";
     t.innerText = "🎯"; 
@@ -216,7 +211,7 @@ function initMove(cv) {
 }
 
 function initType(cv) {
-  const words = ["ปัญญาประดิษฐ์", "พฤติกรรมมนุษย์", "เทคโนโลยีใหม่"];
+  const words = ["ฐานข้อมูลนีออน", "วิเคราะห์พฤติกรรม", "เน็ตลิฟายฟังก์ชัน"];
   let idx = 0;
   function update() {
     cv.innerHTML = `<div style="margin-top:60px"><div style="font-size:2rem; color:var(--neon); margin-bottom:20px">${words[idx]}</div><input type="text" id="typer" autofocus autocomplete="off"></div>`;
@@ -231,11 +226,11 @@ function initReflex(cv) {
   let count = 0;
   function next() {
     cv.style.background = "rgba(0,0,0,0.3)";
-    cv.innerHTML = `<p style="margin-top:140px">รอสัญญาณสีชมพู... (${count}/3)</p>`;
+    cv.innerHTML = `<p style="margin-top:140px">รอสัญญาณ... (${count}/3)</p>`;
     setTimeout(() => {
       if(currentStage !== 3) return;
       cv.style.background = "var(--accent)";
-      cv.innerHTML = `<p style="margin-top:140px; font-weight:bold; font-size:1.5rem">CLICK!</p>`;
+      cv.innerHTML = `<p style="margin-top:140px; font-weight:bold; font-size:1.5rem">CLICK NOW!</p>`;
       cv.onmousedown = () => { cv.onmousedown = null; count++; if(count < 3) next(); else { cv.style.background="transparent"; finishStage(); } };
     }, Math.random() * 2000 + 1000);
   }
@@ -246,14 +241,17 @@ function initMaze(cv) {
   cv.innerHTML = `
     <div class="maze-container" id="mazeCont">
       <svg width="600" height="350" viewBox="0 0 600 350">
-        <path class="maze-road" d="M 120 80 H 480 V 270 H 120 Z" />
-        <path id="mazeTrigger" class="maze-trigger" d="M 120 80 H 480 V 270 H 120 Z" />
+        <path class="maze-road" d="M 50 50 H 550 V 150 H 50 V 300 H 550" />
+        <path id="mazeTrigger" class="maze-trigger" d="M 50 50 H 550 V 150 H 50 V 300 H 550" />
       </svg>
-      <div id="start-node" class="maze-point">START</div>
-      <div id="goal-node" class="maze-point">GOAL</div>
-      <div class="laser laser-v" style="height:120px; animation: laserMoveV 2.5s infinite ease-in-out;"></div>
-      <div class="laser laser-h" style="width:120px; animation: laserMoveH 3.5s infinite ease-in-out;"></div>
-      <div class="laser" style="width:140px; height:4px; top:50%; left:50%; transform-origin:center; animation: laserRotate 5s infinite linear;"></div>
+      <div id="start-node" class="maze-point" style="left:25px; top:25px; background:var(--accent);">START</div>
+      <div id="goal-node" class="maze-point" style="right:25px; bottom:25px; background:var(--neon); color:#000;">GOAL</div>
+      
+      <div class="laser" style="width:100px; height:4px; top:150px; right:30px; transform-origin:center; animation: laserRotate 2s infinite linear;"></div>
+      <div class="laser" style="width:100px; height:4px; top:150px; left:30px; transform-origin:center; animation: laserRotate 2.5s infinite linear;"></div>
+      
+      <div class="laser laser-v" style="height:60px; top:120px; animation: laserMoveV 1.5s infinite ease-in-out;"></div>
+      <div class="laser laser-v" style="height:60px; top:270px; animation: laserMoveV 2s infinite ease-in-out; animation-delay:0.5s;"></div>
     </div>
   `;
   const cont = document.getElementById("mazeCont");
@@ -271,12 +269,12 @@ function initMaze(cv) {
   goal.onmouseenter = () => { trig.onmouseleave = null; finishStage(); };
 }
 
-/* --- NETLIFY FUNCTIONS INTEGRATION --- */
+/* --- 4. BACKEND INTEGRATION --- */
 async function exportData() {
   const status = document.getElementById("save-status");
   const btn = document.getElementById("exportBtn");
   btn.disabled = true;
-  status.innerText = "⏳ กำลังบันทึกข้อมูลลง Neon Database...";
+  status.innerText = "⏳ กำลังเชื่อมต่อฐานข้อมูล Neon...";
 
   const payload = {
     mouse: computeFullStats(mouseIntervals),
@@ -293,8 +291,8 @@ async function exportData() {
     });
     if (response.ok) {
       status.style.color = "var(--neon)";
-      status.innerText = "บันทึกข้อมูลสำเร็จ! ✅";
-    } else { throw new Error("Database connection failed"); }
+      status.innerText = "บันทึกข้อมูลเรียบร้อยแล้ว! ขอบคุณที่ร่วมการทดสอบ ✅";
+    } else { throw new Error("Database error"); }
   } catch (err) {
     status.style.color = "var(--accent)";
     status.innerText = "❌ เกิดข้อผิดพลาด: " + err.message;
