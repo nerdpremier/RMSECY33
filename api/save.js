@@ -1,7 +1,10 @@
 const { Client } = require('pg');
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+  // รับเฉพาะ Method POST
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
 
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
@@ -29,8 +32,12 @@ export default async function handler(req, res) {
     await client.end();
 
     return res.status(200).json({ message: "Success" });
+
   } catch (err) {
-    if (client) await client.end();
+    if (client) {
+      try { await client.end(); } catch (e) {}
+    }
+    console.error("DB Error:", err.message);
     return res.status(500).json({ error: err.message });
   }
 }
