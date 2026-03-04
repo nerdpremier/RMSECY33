@@ -43,19 +43,12 @@ button.main-btn {
   position: relative; width: 100%; height: 100%; 
   display: flex; justify-content: center; align-items: center; cursor: crosshair; 
 }
-.maze-road { 
-  fill: none; stroke: rgba(255, 255, 255, 0.15); stroke-width: 45; 
-  stroke-linecap: round; stroke-linejoin: round; 
-}
-.maze-trigger { 
-  fill: none; stroke: transparent; stroke-width: 55; 
-  pointer-events: stroke; stroke-linecap: round; stroke-linejoin: round; 
-}
+.maze-road { fill: none; stroke: rgba(255, 255, 255, 0.15); stroke-width: 45; stroke-linecap: round; stroke-linejoin: round; }
+.maze-trigger { fill: none; stroke: transparent; stroke-width: 55; pointer-events: stroke; stroke-linecap: round; stroke-linejoin: round; }
 .maze-point { 
   width: 50px; height: 50px; border-radius: 50%; position: absolute; 
   display: flex; align-items: center; justify-content: center; 
-  font-size: 11px; font-weight: bold; z-index: 30; 
-  transform: translate(-50%, -50%); 
+  font-size: 11px; font-weight: bold; z-index: 30; transform: translate(-50%, -50%); 
 }
 
 input#typer {
@@ -63,8 +56,6 @@ input#typer {
   background: transparent; color: white; font-size: 1.5rem; text-align: center; margin-top: 40px; outline: none;
 }
 #save-status { margin-top: 25px; font-size: 1.1rem; color: #aaa; font-weight: bold; }
-
-/* สร้าง Animation สำหรับความสำเร็จ */
 .success-check { color: var(--neon); font-size: 4rem; margin-bottom: 10px; display: block; }
 </style>
 </head>
@@ -80,6 +71,7 @@ input#typer {
 /* --- DATA COLLECTION --- */
 let mouseIntervals=[], clickIntervals=[], keyIntervals=[], idleDurations=[];
 let lastMouse=null, lastClick=null, lastKey=null, lastActivity=Date.now();
+const sessionStart = Date.now();
 
 document.addEventListener("mousemove", () => {
   let now = Date.now();
@@ -102,7 +94,7 @@ setInterval(() => {
   if(idle > 1000) { idleDurations.push(idle); lastActivity = Date.now(); }
 }, 1000);
 
-/* --- STATS CALCULATOR --- */
+/* --- STATS CALCULATOR & CLEANING --- */
 function percentile(arr,p){
   let s=[...arr].sort((a,b)=>a-b);
   if(!s.length) return 0;
@@ -110,32 +102,47 @@ function percentile(arr,p){
   let l=Math.floor(i), u=Math.ceil(i);
   return l===u ? s[i] : s[l]+(s[u]-s[l])*(i-l);
 }
+
 function removeOutliers(arr){
   if(arr.length < 4) return arr;
   let Q1=percentile(arr,25), Q3=percentile(arr,75);
   let IQR=Q3-Q1;
   return arr.filter(v => v >= (Q1-1.5*IQR) && v <= (Q3+1.5*IQR));
 }
-function getStats(raw){
-  if(!raw.length) return { mean: 0, std: 0, variance: 0, count: 0 };
-  let f = removeOutliers(raw);
+
+function getStats(raw, type = "general") {
+  // กรองเบื้องต้น: Missing values และ Noise (Human Limit)
+  if (!raw || raw.length < 2) return { mean: 0, std: 0, variance: 0, count: 0, scaled: 0 };
+  
+  let filtered = raw;
+  if (type === "click") filtered = raw.filter(v => v >= 60); // ตัดค่าที่ต่ำกว่าความสามารถมนุษย์
+  if (type === "mouse") filtered = raw.filter(v => v >= 1);
+
+  let f = removeOutliers(filtered);
+  if (f.length === 0) return { mean: 0, std: 0, variance: 0, count: 0, scaled: 0 };
+
   let m = f.reduce((a,b)=>a+b,0)/f.length;
   let v = f.reduce((a,b)=>a+(b-m)**2,0)/f.length;
+  
+  // Normalization (Scale 0-1) โดยอิงจากเกณฑ์มาตรฐาน 2000ms
+  let scaledValue = Math.min(m / 2000, 1).toFixed(4);
+
   return { 
     mean: Math.round(m), 
     std: Math.round(Math.sqrt(v)), 
     variance: Math.round(v), 
-    count: f.length 
+    count: f.length,
+    scaled: parseFloat(scaledValue)
   };
 }
 
 /* --- GAME ENGINE --- */
 const stages = [
   { name: "🎯 Click Hunt", desc: "คลิกเป้าหมาย 10 จุด", type: "click" },
-  { name: "🛸 Orbital", desc: "ลากเมาส์ตามเป้าหมาย (10 วินาที)", time: 10, type: "move" },
+  { name: "🛸 Orbital", desc: "ลากเมาส์ตามเป้าหมาย (โหมดความเร็วต่ำ)", time: 10, type: "move" },
   { name: "⌨️ Speed Typer", desc: "พิมพ์คำที่กำหนดให้ถูกต้อง", type: "type" },
   { name: "⚡ Reflex", desc: "คลิกเมื่อจอเปลี่ยนเป็นสีชมพู (3 ครั้ง)", type: "reflex" },
-  { name: "🖋️ Steady Hand", desc: "ลากเมาส์ตามทาง: ห้ามออกนอกกรอบสีขาว!", type: "steady_path" }
+  { name: "🖋️ Steady Hand", desc: "ลากเมาส์ตามทาง: ห้ามออกนอกกรอบ!", type: "steady_path" }
 ];
 
 let currentStage = 0;
@@ -143,37 +150,19 @@ let timer = null;
 
 function renderStage() {
   const challengeArea = document.getElementById("challengeArea");
-  
   if(currentStage >= stages.length) {
-    challengeArea.innerHTML = `
-      <div class="card">
-        <span class="success-check">🏆</span>
-        <h2>การทดสอบเสร็จสมบูรณ์</h2>
-        <p id="final-msg">ระบบกำลังวิเคราะห์และบันทึกข้อมูลพฤติกรรมอัตโนมัติ...</p>
-      </div>`;
-    // เรียกฟังก์ชันบันทึกอัตโนมัติทันที
+    challengeArea.innerHTML = `<div class="card"><span class="success-check">🏆</span><h2>เสร็จสมบูรณ์</h2><p id="final-msg">ระบบกำลังล้างข้อมูลและประมวลผลอัตโนมัติ...</p></div>`;
     autoExportData();
     return;
   }
-  
   let s = stages[currentStage];
-  challengeArea.innerHTML = `
-    <div class="card">
-      <small>ด่าน ${currentStage + 1} / ${stages.length}</small>
-      <h2>${s.name}</h2>
-      <p>${s.desc}</p>
-      <div class="timer" id="timeDisplay">${s.time ? s.time + 's' : '--'}</div>
-      <div id="gameCanvas">
-        <button class="main-btn" style="margin-top:140px" onclick="startStage()">เริ่มภารกิจ</button>
-      </div>
-    </div>`;
+  challengeArea.innerHTML = `<div class="card"><small>ด่าน ${currentStage + 1} / ${stages.length}</small><h2>${s.name}</h2><p>${s.desc}</p><div class="timer" id="timeDisplay">${s.time ? s.time + 's' : '--'}</div><div id="gameCanvas"><button class="main-btn" style="margin-top:140px" onclick="startStage()">เริ่มภารกิจ</button></div></div>`;
 }
 
 function startStage() {
   let s = stages[currentStage];
   const canvas = document.getElementById("gameCanvas");
   canvas.innerHTML = "";
-
   if(s.type === "click") initClick(canvas);
   if(s.type === "move") initMove(canvas);
   if(s.type === "type") initType(canvas);
@@ -182,30 +171,20 @@ function startStage() {
 
   if(s.time) {
     let timeLeft = s.time;
-    timer = setInterval(() => {
-      timeLeft--;
-      document.getElementById("timeDisplay").innerText = timeLeft + "s";
-      if(timeLeft <= 0) finishStage();
-    }, 1000);
+    timer = setInterval(() => { timeLeft--; document.getElementById("timeDisplay").innerText = timeLeft + "s"; if(timeLeft <= 0) finishStage(); }, 1000);
   }
 }
 
-function finishStage() {
-  clearInterval(timer);
-  currentStage++;
-  document.getElementById("overallBar").style.width = (currentStage/stages.length*100) + "%";
-  renderStage();
-}
+function finishStage() { clearInterval(timer); currentStage++; document.getElementById("overallBar").style.width = (currentStage/stages.length*100) + "%"; renderStage(); }
 
-/* --- STAGE LOGIC (SAME AS BEFORE) --- */
+/* --- STAGE LOGIC --- */
 function initClick(cv) {
   let count = 0;
   function spawn() {
     cv.innerHTML = `<div style="padding:15px">แต้ม: ${count}/10</div>`;
     let t = document.createElement("div"); t.className = "target";
     t.style.left = Math.random()*85+"%"; t.style.top = Math.random()*60+20+"%";
-    t.innerText = "🎯"; 
-    t.onmousedown = () => { count++; if(count < 10) spawn(); else finishStage(); };
+    t.innerText = "🎯"; t.onmousedown = () => { count++; if(count < 10) spawn(); else finishStage(); };
     cv.appendChild(t);
   }
   spawn();
@@ -216,7 +195,8 @@ function initMove(cv) {
   let a = 0;
   function anim() { 
     if(currentStage !== 1) return; 
-    a += 0.015; t.style.left = (50 + Math.cos(a)*35)+"%"; t.style.top = (50 + Math.sin(a*0.8)*35)+"%"; 
+    a += 0.015; // ปรับความเร็วลงตามคำขอ
+    t.style.left = (50 + Math.cos(a)*35)+"%"; t.style.top = (50 + Math.sin(a*0.8)*35)+"%"; 
     requestAnimationFrame(anim); 
   }
   anim();
@@ -227,8 +207,7 @@ function initType(cv) {
   let idx = 0;
   function update() {
     cv.innerHTML = `<div style="margin-top:60px"><div style="font-size:2rem; color:var(--neon); margin-bottom:15px">${words[idx]}</div><input type="text" id="typer" autofocus autocomplete="off"></div>`;
-    const input = document.getElementById("typer");
-    input.focus();
+    const input = document.getElementById("typer"); input.focus();
     input.oninput = (e) => { if(e.target.value === words[idx]) { idx++; if(idx < words.length) update(); else finishStage(); } };
   }
   update();
@@ -237,12 +216,10 @@ function initType(cv) {
 function initReflex(cv) {
   let count = 0;
   function next() {
-    cv.style.background = "rgba(0,0,0,0.3)";
-    cv.innerHTML = `<p style="margin-top:140px">เตรียมตัว... (${count}/3)</p>`;
+    cv.style.background = "rgba(0,0,0,0.3)"; cv.innerHTML = `<p style="margin-top:140px">เตรียมตัว... (${count}/3)</p>`;
     setTimeout(() => {
       if(currentStage !== 3) return;
-      cv.style.background = "var(--accent)";
-      cv.innerHTML = `<p style="margin-top:140px; font-weight:bold; font-size:1.8rem">CLICK!!!</p>`;
+      cv.style.background = "var(--accent)"; cv.innerHTML = `<p style="margin-top:140px; font-weight:bold; font-size:1.8rem">CLICK!!!</p>`;
       cv.onmousedown = () => { cv.onmousedown = null; count++; if(count < 3) next(); else { cv.style.background="transparent"; finishStage(); } };
     }, Math.random() * 2500 + 1000);
   }
@@ -250,42 +227,41 @@ function initReflex(cv) {
 }
 
 function initSteadyPath(cv) {
-  cv.innerHTML = `
-    <div class="maze-container" id="mazeCont">
-      <svg width="100%" height="100%" viewBox="0 0 600 360" preserveAspectRatio="xMidYMid meet" style="position:absolute;">
-        <path class="maze-road" d="M 100 60 H 500 V 180 H 100 V 300 H 500" />
-        <path id="mazeTrigger" class="maze-trigger" d="M 100 60 H 500 V 180 H 100 V 300 H 500" />
-      </svg>
-      <div id="start-node" class="maze-point" style="left:150px; top:60px; background:var(--accent);">START</div>
-      <div id="goal-node" class="maze-point" style="left:580px; top:300px; background:var(--neon); color:#000;">GOAL</div>
-    </div>
-  `;
-  const trig = document.getElementById("mazeTrigger");
-  const goal = document.getElementById("goal-node");
-
-  trig.onmouseleave = (e) => {
-    if(e.relatedTarget !== goal) {
-      alert("⚠️ มือสั่น! คุณทำเมาส์หลุดจากเส้นทาง กรุณาเริ่มใหม่จากจุด START");
-    }
-  };
-
-  goal.onmouseenter = () => {
-    trig.onmouseleave = null; 
-    finishStage();
-  };
+  cv.innerHTML = `<div class="maze-container" id="mazeCont"><svg width="100%" height="100%" viewBox="0 0 600 360" preserveAspectRatio="xMidYMid meet" style="position:absolute;"><path class="maze-road" d="M 100 60 H 500 V 180 H 100 V 300 H 500" /><path id="mazeTrigger" class="maze-trigger" d="M 100 60 H 500 V 180 H 100 V 300 H 500" /></svg><div id="start-node" class="maze-point" style="left:150px; top:60px; background:var(--accent);">START</div><div id="goal-node" class="maze-point" style="left:580px; top:300px; background:var(--neon); color:#000;">GOAL</div></div>`;
+  const trig = document.getElementById("mazeTrigger"); const goal = document.getElementById("goal-node");
+  trig.onmouseleave = (e) => { if(e.relatedTarget !== goal) alert("⚠️ มือสั่น! กรุณาเริ่มใหม่จากจุด START"); };
+  goal.onmouseenter = () => { trig.onmouseleave = null; finishStage(); };
 }
 
-/* --- AUTO SAVE FUNCTION --- */
+/* --- AUTO SAVE & FEATURE CLEANING --- */
 async function autoExportData() {
   const status = document.getElementById("save-status");
   const msg = document.getElementById("final-msg");
-  status.innerText = "⏳ กำลังซิงค์ข้อมูล ...";
+  status.innerText = "⏳ กำลังล้าง Noise และปรับค่าสถิติ...";
+
+  // คำนวณ Meta-features
+  const totalTimeSec = (Date.now() - sessionStart) / 1000;
+  const idleSum = idleDurations.reduce((a,b) => a+b, 0) / 1000;
+  const idleRatio = idleSum / totalTimeSec;
+  const interactionDensity = (mouseIntervals.length + clickIntervals.length + keyIntervals.length) / totalTimeSec;
+
+  // กรอง Noise: ถ้า idle นานเกิน 90% หรือแทบไม่มีการขยับเลย
+  if (idleRatio > 0.9 || interactionDensity < 0.5) {
+    status.style.color = "var(--accent)";
+    status.innerText = "⚠️ ข้อมูลถูกปฏิเสธ: พบพฤติกรรมไม่พึงประสงค์ (Idle/Noise)";
+    return;
+  }
 
   const payload = {
-    mouse: getStats(mouseIntervals),
-    click: getStats(clickIntervals),
+    mouse: getStats(mouseIntervals, "mouse"),
+    click: getStats(clickIntervals, "click"),
     key: getStats(keyIntervals),
-    idle: getStats(idleDurations)
+    idle: getStats(idleDurations),
+    summary: {
+      idle_ratio: parseFloat(idleRatio.toFixed(4)),
+      interaction_density: parseFloat(interactionDensity.toFixed(2)),
+      total_duration_sec: Math.round(totalTimeSec)
+    }
   };
 
   try {
@@ -294,16 +270,15 @@ async function autoExportData() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
-    
     if (res.ok) {
       status.style.color = "var(--neon)";
-      status.innerText = "✅ บันทึกข้อมูลเรียบร้อยแล้ว! ขอบคุณที่ร่วมทดสอบ";
-      msg.innerText = "ข้อมูลพฤติกรรมของคุณถูกส่งไปยังฐานข้อมูลแล้ว";
-    } else { throw new Error("Server Response Error"); }
+      status.innerText = "✅ บันทึกข้อมูลสำเร็จ (Cleaned & Scaled)";
+      msg.innerText = "ข้อมูลถูกส่งไปยังฐานข้อมูล Neon เรียบร้อยแล้ว";
+    } else { throw new Error("Server Error"); }
   } catch (err) {
     status.style.color = "var(--accent)";
-    status.innerText = "❌ บันทึกไม่สำเร็จ: " + err.message;
-    msg.innerHTML = `<button class="main-btn" onclick="autoExportData()">พยายามส่งข้อมูลอีกครั้ง</button>`;
+    status.innerText = "❌ เกิดข้อผิดพลาด: " + err.message;
+    msg.innerHTML = `<button class="main-btn" onclick="autoExportData()">ส่งข้อมูลใหม่อีกครั้ง</button>`;
   }
 }
 
