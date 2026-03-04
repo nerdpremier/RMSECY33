@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Behavior Lab: Precision Analytics</title>
+<title>Behavior-RMSE-CY33</title>
 <style>
 :root { --neon: #00ffcc; --bg: #0f172a; --accent: #ff007a; }
 body {
@@ -219,7 +219,7 @@ function initMove(cv) {
 }
 
 function initType(cv) {
-  const words = ["ฐานข้อมูล", "กลไกพฤติกรรม", "นวัตกรรม"];
+  const words = ["ไม่อยากเรียนRMSE", "ILoveRMSE", "อยากนอนแล้ว"];
   let idx = 0;
   function update() {
     cv.innerHTML = `<div style="margin-top:60px"><div style="font-size:2rem; color:var(--neon); margin-bottom:15px">${words[idx]}</div><input type="text" id="typer" autofocus autocomplete="off"></div>`;
@@ -254,7 +254,7 @@ function initSteadyPath(cv) {
         <path id="mazeTrigger" class="maze-trigger" d="M 100 60 H 500 V 180 H 100 V 300 H 500" />
       </svg>
       <div id="start-node" class="maze-point" style="left:100px; top:60px; background:var(--accent);">START</div>
-      <div id="goal-node" class="maze-point" style="left:500px; top:300px; background:var(--neon); color:#000;">GOAL</div>
+      <div id="goal-node" class="maze-point" style="left:300px; top:300px; background:var(--neon); color:#000;">GOAL</div>
     </div>
   `;
   const trig = document.getElementById("mazeTrigger");
