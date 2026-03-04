@@ -1,7 +1,7 @@
-const { Client } = require('pg');
+import pkg from 'pg';
+const { Client } = pkg;
 
 export default async function handler(req, res) {
-  // รับเฉพาะ Method POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
