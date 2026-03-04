@@ -41,15 +41,24 @@ button.main-btn {
 #exportBtn { display: none; margin: 20px auto; background: var(--accent); box-shadow: 0 0 15px var(--accent); }
 #exportBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* STAGE 5: Steady Path Styles */
-.maze-container { position: relative; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; cursor: crosshair; }
-.maze-road { fill: none; stroke: rgba(255, 255, 255, 0.15); stroke-width: 45; stroke-linecap: round; stroke-linejoin: round; }
-.maze-trigger { fill: none; stroke: transparent; stroke-width: 55; pointer-events: stroke; stroke-linecap: round; stroke-linejoin: round; }
+/* STAGE 5: Steady Path Styles (Balanced) */
+.maze-container { 
+  position: relative; width: 100%; height: 100%; 
+  display: flex; justify-content: center; align-items: center; cursor: crosshair; 
+}
+.maze-road { 
+  fill: none; stroke: rgba(255, 255, 255, 0.15); stroke-width: 45; 
+  stroke-linecap: round; stroke-linejoin: round; 
+}
+.maze-trigger { 
+  fill: none; stroke: transparent; stroke-width: 55; 
+  pointer-events: stroke; stroke-linecap: round; stroke-linejoin: round; 
+}
 .maze-point { 
   width: 50px; height: 50px; border-radius: 50%; position: absolute; 
   display: flex; align-items: center; justify-content: center; 
   font-size: 11px; font-weight: bold; z-index: 30; 
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%); 
 }
 
 input#typer {
@@ -237,14 +246,15 @@ function initReflex(cv) {
 }
 
 function initSteadyPath(cv) {
+  // Balanced SVG Path: เว้นขอบซ้ายขวา 100px และจัดเลนให้อยู่กลาง
   cv.innerHTML = `
     <div class="maze-container" id="mazeCont">
-      <svg width="600" height="360" viewBox="0 0 600 360" style="position:absolute;">
-        <path class="maze-road" d="M 60 60 H 540 V 180 H 60 V 300 H 540" />
-        <path id="mazeTrigger" class="maze-trigger" d="M 60 60 H 540 V 180 H 60 V 300 H 540" />
+      <svg width="100%" height="100%" viewBox="0 0 600 360" preserveAspectRatio="xMidYMid meet" style="position:absolute;">
+        <path class="maze-road" d="M 100 60 H 500 V 180 H 100 V 300 H 500" />
+        <path id="mazeTrigger" class="maze-trigger" d="M 100 60 H 500 V 180 H 100 V 300 H 500" />
       </svg>
-      <div id="start-node" class="maze-point" style="left:60px; top:60px; background:var(--accent);">START</div>
-      <div id="goal-node" class="maze-point" style="left:540px; top:300px; background:var(--neon); color:#000;">GOAL</div>
+      <div id="start-node" class="maze-point" style="left:100px; top:60px; background:var(--accent);">START</div>
+      <div id="goal-node" class="maze-point" style="left:500px; top:300px; background:var(--neon); color:#000;">GOAL</div>
     </div>
   `;
   const trig = document.getElementById("mazeTrigger");
@@ -252,7 +262,6 @@ function initSteadyPath(cv) {
 
   trig.onmouseleave = (e) => {
     if(e.relatedTarget !== goal) {
-      // แจ้งเตือนทันทีโดยไม่มีเอฟเฟกต์สีแดง
       alert("⚠️ มือสั่น! คุณทำเมาส์หลุดจากเส้นทาง กรุณาเริ่มใหม่จากจุด START");
     }
   };
