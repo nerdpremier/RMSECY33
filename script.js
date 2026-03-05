@@ -264,7 +264,7 @@ async function autoExportData() {
         });
         if (res.ok) {
             status.style.color = "var(--neon)";
-            status.innerText = "✅ บันทึกสำเร็จ (Scaled & 3-Decimal)";
+            status.innerText = "✅ บันทึกสำเร็จ";
             msg.innerText = "ข้อมูลถูกส่งเข้าระบบเรียบร้อย";
         } else { throw new Error("Server Error"); }
     } catch (err) {
