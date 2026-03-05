@@ -159,26 +159,61 @@ function initType(cv) {
 }
 
 function initKeyRhythm(cv) {
-    let count = 0; const keys = ["F", "J", "Space"];
+    let count = 0; 
+    const keys = ["R", "M", "S", "E"];
+    
     function next() {
         let k = keys[count];
-        cv.innerHTML = `<div style="margin-top:60px"><p>กดค้างจนกว่าจะเต็ม</p><div class="key-hint">${k==="Space"?"⎵":k}</div><div id="keyProg" style="width:0%; height:10px; background:var(--neon); margin:20px auto; border-radius:5px;"></div></div>`;
+        let displayKey = k === "Space" ? "␣" : k; // ใช้สัญลักษณ์สเปซบาร์ที่สวยขึ้น
+        
+        cv.innerHTML = `
+            <div style="margin-top:40px">
+                <p class="key-instruction">HOLD KEY TO CHARGE</p>
+                <div id="keyVisual" class="rhythm-key-display">${displayKey}</div>
+                <div style="width:200px; height:8px; background:#222; margin:20px auto; border-radius:10px; overflow:hidden;">
+                    <div id="keyProg" style="width:0%; height:100%; background:var(--neon); transition: width 0.05s linear;"></div>
+                </div>
+            </div>
+        `;
+
+        const keyVisual = document.getElementById("keyVisual");
+        const keyProg = document.getElementById("keyProg");
         let pressing = false, progress = 0, interval = null;
+
         const down = (e) => {
             let target = k === "Space" ? " " : k.toLowerCase();
             if (e.key.toLowerCase() === target && !pressing) {
                 pressing = true;
+                keyVisual.classList.add("active"); // เพิ่ม Effect เมื่อกด
+                
                 interval = setInterval(() => {
-                    progress += 2; document.getElementById("keyProg").style.width = progress + "%";
+                    progress += 2.5; // ความเร็วในการชาร์จ
+                    if(keyProg) keyProg.style.width = progress + "%";
+                    
                     if (progress >= 100) {
-                        clearInterval(interval); window.removeEventListener("keydown", down); window.removeEventListener("keyup", up);
-                        count++; if (count < keys.length) next(); else finishStage();
+                        clearInterval(interval);
+                        window.removeEventListener("keydown", down);
+                        window.removeEventListener("keyup", up);
+                        count++; 
+                        if (count < keys.length) next(); else finishStage();
                     }
                 }, 20);
             }
         };
-        const up = (e) => { if (e.key.toLowerCase() === (k==="Space"?" ":k.toLowerCase())) { pressing = false; clearInterval(interval); progress = 0; if(document.getElementById("keyProg")) document.getElementById("keyProg").style.width = "0%"; } };
-        window.addEventListener("keydown", down); window.addEventListener("keyup", up);
+
+        const up = (e) => {
+            let target = k === "Space" ? " " : k.toLowerCase();
+            if (e.key.toLowerCase() === target) {
+                pressing = false;
+                keyVisual.classList.remove("active"); // เอา Effect ออกเมื่อปล่อย
+                clearInterval(interval);
+                progress = 0;
+                if(keyProg) keyProg.style.width = "0%";
+            }
+        };
+
+        window.addEventListener("keydown", down);
+        window.addEventListener("keyup", up);
     }
     next();
 }

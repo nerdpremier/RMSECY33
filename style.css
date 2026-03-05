@@ -119,6 +119,38 @@ input#typer {
     text-shadow: 0 0 10px var(--accent);
 }
 
+/* สไตล์ใหม่สำหรับปุ่มในด่าน 4 */
+.rhythm-key-display {
+    width: 120px;
+    height: 120px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 4px solid var(--neon);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+    font-weight: bold;
+    color: var(--neon);
+    margin: 30px auto;
+    transition: all 0.1s;
+    box-shadow: 0 0 15px rgba(0, 255, 204, 0.2);
+}
+
+.rhythm-key-display.active {
+    transform: scale(0.95);
+    background: var(--neon);
+    color: var(--bg);
+    box-shadow: 0 0 40px var(--neon);
+}
+
+.key-instruction {
+    color: #aaa;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+}
+
 .maze-container { position: relative; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
 .maze-road { fill: none; stroke: rgba(255, 255, 255, 0.15); stroke-width: 45; stroke-linecap: round; stroke-linejoin: round; }
 .maze-trigger { fill: none; stroke: transparent; stroke-width: 55; pointer-events: stroke; stroke-linecap: round; stroke-linejoin: round; }
