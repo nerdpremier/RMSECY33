@@ -1,505 +1,403 @@
 <!DOCTYPE html>
 <html lang="th">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Behavior-Collector</title>
-  <style>
-    :root {
-      --neon: #00ffcc;
-      --bg: #0f172a;
-      --accent: #ff007a;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Behavior-Collector (Normalized)</title>
+    <style>
+        :root {
+            --neon: #00ffcc;
+            --bg: #0f172a;
+            --accent: #ff007a;
+        }
 
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: var(--bg);
-      color: white;
-      overflow: hidden;
-    }
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg);
+            color: white;
+            overflow: hidden;
+        }
 
-    .container {
-      max-width: 800px;
-      margin: 40px auto;
-      padding: 20px;
-      text-align: center;
-    }
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            text-align: center;
+        }
 
-    .card {
-      background: rgba(255, 255, 255, 0.03);
-      backdrop-filter: blur(15px);
-      padding: 30px;
-      border-radius: 25px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      min-height: 440px;
-      position: relative;
-    }
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(15px);
+            padding: 30px;
+            border-radius: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            min-height: 440px;
+            position: relative;
+        }
 
-    .progress-container {
-      width: 100%;
-      height: 6px;
-      background: #222;
-      border-radius: 10px;
-      margin-bottom: 25px;
-    }
+        .progress-container {
+            width: 100%;
+            height: 6px;
+            background: #222;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
 
-    .progress-bar {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, var(--neon), #0072ff);
-      border-radius: 10px;
-      transition: 0.4s;
-    }
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--neon), #0072ff);
+            border-radius: 10px;
+            transition: 0.4s;
+        }
 
-    h2 {
-      margin-top: 0;
-      color: var(--neon);
-      text-transform: uppercase;
-      letter-spacing: 2px;
-    }
+        h2 { margin-top: 0; color: var(--neon); text-transform: uppercase; letter-spacing: 2px; }
 
-    .timer {
-      font-size: 2.5rem;
-      font-weight: bold;
-      color: #ffcc00;
-      font-family: monospace;
-    }
+        .timer {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #ffcc00;
+            font-family: monospace;
+        }
 
-    #gameCanvas {
-      width: 100%;
-      height: 360px;
-      position: relative;
-      background: rgba(0, 0, 0, 0.5);
-      border-radius: 15px;
-      margin-top: 20px;
-      overflow: hidden;
-      border: 2px solid rgba(255, 255, 255, 0.1);
-    }
+        #gameCanvas {
+            width: 100%;
+            height: 360px;
+            position: relative;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            margin-top: 20px;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
 
-    .target {
-      width: 50px;
-      height: 50px;
-      background: var(--neon);
-      border-radius: 50%;
-      position: absolute;
-      cursor: crosshair;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 0 20px var(--neon);
-      font-size: 20px;
-      z-index: 10;
-    }
+        .target {
+            width: 50px;
+            height: 50px;
+            background: var(--neon);
+            border-radius: 50%;
+            position: absolute;
+            cursor: crosshair;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px var(--neon);
+            font-size: 20px;
+            z-index: 10;
+        }
 
-    button.main-btn {
-      padding: 15px 40px;
-      border: none;
-      border-radius: 50px;
-      background: linear-gradient(45deg, #00c6ff, #0072ff);
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      transition: 0.2s;
-    }
+        button.main-btn {
+            padding: 15px 40px;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(45deg, #00c6ff, #0072ff);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
 
-    .maze-container {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      cursor: crosshair;
-    }
+        input#typer {
+            width: 80%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 2px solid var(--neon);
+            background: transparent;
+            color: white;
+            font-size: 1.5rem;
+            text-align: center;
+            margin-top: 40px;
+            outline: none;
+        }
 
-    .maze-road {
-      fill: none;
-      stroke: rgba(255, 255, 255, 0.15);
-      stroke-width: 45;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
+        #save-status {
+            margin-top: 25px;
+            font-size: 1.1rem;
+            color: #aaa;
+            font-weight: bold;
+            padding: 10px;
+        }
 
-    .maze-trigger {
-      fill: none;
-      stroke: transparent;
-      stroke-width: 55;
-      pointer-events: stroke;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
+        .key-hint {
+            font-size: 3rem;
+            margin-top: 50px;
+            color: var(--accent);
+            text-shadow: 0 0 10px var(--accent);
+        }
 
-    .maze-point {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      position: absolute;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      font-weight: bold;
-      z-index: 30;
-      transform: translate(-50%, -50%);
-    }
-
-    input#typer {
-      width: 80%;
-      padding: 12px;
-      border-radius: 10px;
-      border: 2px solid var(--neon);
-      background: transparent;
-      color: white;
-      font-size: 1.5rem;
-      text-align: center;
-      margin-top: 40px;
-      outline: none;
-    }
-
-    #save-status {
-      margin-top: 25px;
-      font-size: 1.1rem;
-      color: #aaa;
-      font-weight: bold;
-      padding: 10px;
-      border-radius: 10px;
-      background: rgba(0, 0, 0, 0.2);
-    }
-
-    .success-check {
-      color: var(--neon);
-      font-size: 4rem;
-      margin-bottom: 10px;
-      display: block;
-    }
-
-    .key-hint {
-        font-size: 3rem;
-        margin-top: 50px;
-        color: var(--accent);
-        text-shadow: 0 0 10px var(--accent);
-    }
-  </style>
+        /* Steady Path Styles */
+        .maze-container { position: relative; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
+        .maze-road { fill: none; stroke: rgba(255, 255, 255, 0.15); stroke-width: 45; stroke-linecap: round; stroke-linejoin: round; }
+        .maze-trigger { fill: none; stroke: transparent; stroke-width: 55; pointer-events: stroke; stroke-linecap: round; stroke-linejoin: round; }
+        .maze-point { width: 50px; height: 50px; border-radius: 50%; position: absolute; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; transform: translate(-50%, -50%); }
+    </style>
 </head>
-
 <body>
 
-  <div class="container">
+<div class="container">
     <div class="progress-container">
-      <div id="overallBar" class="progress-bar"></div>
+        <div id="overallBar" class="progress-bar"></div>
     </div>
     <div id="challengeArea"></div>
     <div id="save-status"></div>
-  </div>
+</div>
 
-  <script>
-    let mouseIntervals = [],
-      clickIntervals = [],
-      keyIntervals = [],
-      idleDurations = [];
-    let lastMouse = null,
-      lastClick = null,
-      lastKey = null,
-      lastActivity = Date.now();
+<script>
+    // --- Collector Variables ---
+    let mouseIntervals = [], clickIntervals = [], keyIntervals = [], idleDurations = [];
+    let lastMouse = null, lastClick = null, lastKey = null, lastActivity = Date.now();
     const sessionStart = Date.now();
 
+    // --- Listeners ---
     document.addEventListener("mousemove", () => {
-      let now = Date.now();
-      if (lastMouse) mouseIntervals.push(now - lastMouse);
-      lastMouse = now;
-      lastActivity = now;
+        let now = Date.now();
+        if (lastMouse) mouseIntervals.push(now - lastMouse);
+        lastMouse = now; lastActivity = now;
     });
     document.addEventListener("mousedown", () => {
-      let now = Date.now();
-      if (lastClick) clickIntervals.push(now - lastClick);
-      lastClick = now;
-      lastActivity = now;
+        let now = Date.now();
+        if (lastClick) clickIntervals.push(now - lastClick);
+        lastClick = now; lastActivity = now;
     });
     document.addEventListener("keydown", () => {
-      let now = Date.now();
-      if (lastKey) keyIntervals.push(now - lastKey);
-      lastKey = now;
-      lastActivity = now;
+        let now = Date.now();
+        if (lastKey) keyIntervals.push(now - lastKey);
+        lastKey = now; lastActivity = now;
     });
+    
+    // Idle Tracker (Run every 1s)
     setInterval(() => {
-      let idle = Date.now() - lastActivity;
-      if (idle > 1000) {
-        idleDurations.push(idle);
-        lastActivity = Date.now();
-      }
+        let idle = Date.now() - lastActivity;
+        if (idle > 1000) {
+            idleDurations.push(idle);
+            lastActivity = Date.now();
+        }
     }, 1000);
 
+    // --- Math Helpers ---
     function percentile(arr, p) {
-      let s = [...arr].sort((a, b) => a - b);
-      if (!s.length) return 0;
-      let i = (p / 100) * (s.length - 1);
-      let l = Math.floor(i),
-        u = Math.ceil(i);
-      return l === u ? s[i] : s[l] + (s[u] - s[l]) * (i - l);
+        let s = [...arr].sort((a, b) => a - b);
+        if (!s.length) return 0;
+        let i = (p / 100) * (s.length - 1);
+        let l = Math.floor(i), u = Math.ceil(i);
+        return l === u ? s[i] : s[l] + (s[u] - s[l]) * (i - l);
     }
 
     function removeOutliers(arr) {
-      if (arr.length < 4) return arr;
-      let Q1 = percentile(arr, 25),
-        Q3 = percentile(arr, 75);
-      let IQR = Q3 - Q1;
-      return arr.filter(v => v >= (Q1 - 1.5 * IQR) && v <= (Q3 + 1.5 * IQR));
+        if (arr.length < 4) return arr;
+        let Q1 = percentile(arr, 25), Q3 = percentile(arr, 75);
+        let IQR = Q3 - Q1;
+        return arr.filter(v => v >= (Q1 - 1.5 * IQR) && v <= (Q3 + 1.5 * IQR));
     }
 
+    // --- Stats & Scaling Engine ---
     function getStats(raw, type = "general") {
-      if (!raw || raw.length < 2) return {
-        mean: 0,
-        std: 0,
-        variance: 0,
-        count: 0
-      };
-      let filtered = raw;
-      if (type === "click") filtered = raw.filter(v => v >= 60);
-      if (type === "mouse") filtered = raw.filter(v => v >= 1);
-      let f = removeOutliers(filtered);
-      if (f.length === 0) return {
-        mean: 0,
-        std: 0,
-        variance: 0,
-        count: 0
-      };
-      let m = f.reduce((a, b) => a + b, 0) / f.length;
-      let v = f.reduce((a, b) => a + (b - m) ** 2, 0) / f.length;
-      return {
-        mean: Math.round(m),
-        std: Math.round(Math.sqrt(v)),
-        variance: Math.round(v),
-        count: f.length
-      };
+        const result = { mean: 0, std: 0, variance: 0, count: 0, scaled: { mean: 0, std: 0 } };
+        if (!raw || raw.length < 2) return result;
+
+        let filtered = raw;
+        if (type === "click") filtered = raw.filter(v => v >= 60);
+        if (type === "mouse") filtered = raw.filter(v => v >= 1);
+
+        let f = removeOutliers(filtered);
+        if (f.length < 2) return result;
+
+        let m = f.reduce((a, b) => a + b, 0) / f.length;
+        let v = f.reduce((a, b) => a + (b - m) ** 2, 0) / f.length;
+        let s = Math.sqrt(v);
+
+        // Min-Max Scaling Limits (Max values for normalization)
+        const limits = {
+            click: { max_m: 2000, max_s: 500 },
+            mouse: { max_m: 100,  max_s: 50 },
+            key:   { max_m: 1000, max_s: 300 },
+            idle:  { max_m: 10000, max_s: 2000 },
+            general: { max_m: 1000, max_s: 300 }
+        };
+
+        const L = limits[type] || limits.general;
+        const scaled_m = Math.min(Math.max(m / L.max_m, 0), 1);
+        const scaled_s = Math.min(Math.max(s / L.max_s, 0), 1);
+
+        return {
+            mean: Math.round(m),
+            std: Math.round(s),
+            variance: Math.round(v),
+            count: f.length,
+            scaled: {
+                mean: parseFloat(scaled_m.toFixed(4)),
+                std: parseFloat(scaled_s.toFixed(4))
+            }
+        };
     }
 
+    // --- Game Logic & Stages ---
     const stages = [
-      {
-        name: "🎯 Click Hunt",
-        desc: "คลิกเป้าหมาย 10 จุด",
-        type: "click"
-      },
-      {
-        name: "🛸 Orbital",
-        desc: "ลากเมาส์ตามเป้าหมาย",
-        time: 10,
-        type: "move"
-      },
-      {
-        name: "⌨️ Speed Typer",
-        desc: "พิมพ์คำที่ปรากฏให้ถูกต้อง (สุ่มคำ)",
-        type: "type"
-      },
-      {
-        name: "🎹 Rhythm Keeper",
-        desc: "กดปุ่มค้างและปล่อยให้ตรงจังหวะ 5 ครั้ง",
-        type: "key_rhythm"
-      },
-      {
-        name: "🖋️ Steady Hand",
-        desc: "ลากเมาส์ตามทาง: ห้ามออกนอกกรอบ!",
-        type: "steady_path"
-      }
+        { name: "🎯 Click Hunt", desc: "คลิกเป้าหมาย 10 จุด", type: "click" },
+        { name: "🛸 Orbital", desc: "ลากเมาส์ตามเป้าหมาย", time: 10, type: "move" },
+        { name: "⌨️ Speed Typer", desc: "พิมพ์คำที่ปรากฏให้ถูกต้อง", type: "type" },
+        { name: "🎹 Rhythm Keeper", desc: "กดปุ่มค้างและปล่อยให้ตรงจังหวะ", type: "key_rhythm" },
+        { name: "🖋️ Steady Hand", desc: "ลากเมาส์ตามทาง: ห้ามออกนอกกรอบ!", type: "steady_path" }
     ];
     let currentStage = 0;
     let timer = null;
 
     function renderStage() {
-      const challengeArea = document.getElementById("challengeArea");
-      if (currentStage >= stages.length) {
-        challengeArea.innerHTML = `<div class="card"><span class="success-check">🏆</span><h2>เสร็จสมบูรณ์</h2><p id="final-msg">ระบบกำลังประมวลผลสถิติพฤติกรรม...</p></div>`;
-        autoExportData();
-        return;
-      }
-      let s = stages[currentStage];
-      challengeArea.innerHTML = `<div class="card"><small>ด่าน ${currentStage + 1} / ${stages.length}</small><h2>${s.name}</h2><p>${s.desc}</p><div class="timer" id="timeDisplay">${s.time ? s.time + 's' : '--'}</div><div id="gameCanvas"><button class="main-btn" style="margin-top:140px" onclick="startStage()">เริ่มภารกิจ</button></div></div>`;
+        const area = document.getElementById("challengeArea");
+        if (currentStage >= stages.length) {
+            area.innerHTML = `<div class="card"><span style="font-size:4rem">🏆</span><h2>เสร็จสมบูรณ์</h2><p id="final-msg">กำลังประมวลผลข้อมูลสถิติ...</p></div>`;
+            autoExportData();
+            return;
+        }
+        let s = stages[currentStage];
+        area.innerHTML = `<div class="card"><small>ด่าน ${currentStage + 1} / ${stages.length}</small><h2>${s.name}</h2><p>${s.desc}</p><div class="timer" id="timeDisplay">${s.time ? s.time+'s' : '--'}</div><div id="gameCanvas"><button class="main-btn" style="margin-top:140px" onclick="startStage()">เริ่มภารกิจ</button></div></div>`;
     }
 
     function startStage() {
-      let s = stages[currentStage];
-      const canvas = document.getElementById("gameCanvas");
-      canvas.innerHTML = "";
-      if (s.type === "click") initClick(canvas);
-      if (s.type === "move") initMove(canvas);
-      if (s.type === "type") initType(canvas);
-      if (s.type === "key_rhythm") initKeyRhythm(canvas);
-      if (s.type === "steady_path") initSteadyPath(canvas);
-      if (s.time) {
-        let timeLeft = s.time;
-        timer = setInterval(() => {
-          timeLeft--;
-          document.getElementById("timeDisplay").innerText = timeLeft + "s";
-          if (timeLeft <= 0) finishStage();
-        }, 1000);
-      }
+        let s = stages[currentStage];
+        const cv = document.getElementById("gameCanvas");
+        cv.innerHTML = "";
+        if (s.type === "click") initClick(cv);
+        if (s.type === "move") initMove(cv);
+        if (s.type === "type") initType(cv);
+        if (s.type === "key_rhythm") initKeyRhythm(cv);
+        if (s.type === "steady_path") initSteadyPath(cv);
+
+        if (s.time) {
+            let timeLeft = s.time;
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById("timeDisplay").innerText = timeLeft + "s";
+                if (timeLeft <= 0) finishStage();
+            }, 1000);
+        }
     }
 
     function finishStage() {
-      clearInterval(timer);
-      currentStage++;
-      document.getElementById("overallBar").style.width = (currentStage / stages.length * 100) + "%";
-      renderStage();
+        clearInterval(timer);
+        currentStage++;
+        document.getElementById("overallBar").style.width = (currentStage / stages.length * 100) + "%";
+        renderStage();
     }
 
+    // --- Mini Game Initializers (Brief) ---
     function initClick(cv) {
-      let count = 0;
-      function spawn() {
-        cv.innerHTML = `<div style="padding:15px">แต้ม: ${count}/10</div>`;
-        let t = document.createElement("div");
-        t.className = "target";
-        t.style.left = Math.random() * 85 + "%";
-        t.style.top = Math.random() * 60 + 20 + "%";
-        t.innerText = "🎯";
-        t.onmousedown = () => {
-          count++;
-          if (count < 10) spawn();
-          else finishStage();
-        };
-        cv.appendChild(t);
-      }
-      spawn();
+        let count = 0;
+        function spawn() {
+            cv.innerHTML = `<div style="padding:15px">แต้ม: ${count}/10</div>`;
+            let t = document.createElement("div");
+            t.className = "target";
+            t.style.left = Math.random() * 85 + "%";
+            t.style.top = Math.random() * 60 + 20 + "%";
+            t.innerText = "🎯";
+            t.onmousedown = () => { count++; if (count < 10) spawn(); else finishStage(); };
+            cv.appendChild(t);
+        }
+        spawn();
     }
 
     function initMove(cv) {
-      let t = document.createElement("div");
-      t.className = "target";
-      t.innerText = "🛸";
-      cv.appendChild(t);
-      let a = 0;
-      function anim() {
-        if (currentStage !== 1) return;
-        a += 0.015;
-        t.style.left = (50 + Math.cos(a) * 35) + "%";
-        t.style.top = (50 + Math.sin(a * 0.8) * 35) + "%";
-        requestAnimationFrame(anim);
-      }
-      anim();
+        let t = document.createElement("div");
+        t.className = "target"; t.innerText = "🛸"; cv.appendChild(t);
+        let a = 0;
+        function anim() {
+            if (currentStage !== 1) return;
+            a += 0.015;
+            t.style.left = (50 + Math.cos(a) * 35) + "%";
+            t.style.top = (50 + Math.sin(a * 0.8) * 35) + "%";
+            requestAnimationFrame(anim);
+        }
+        anim();
     }
 
     function initType(cv) {
-      const pool = ["Cybersecurity", "Network", "Programming", "Behavioral", "Authentication", "CloudComputing", "MachineLearning", "Encryption", "Database", "Infrastructure"];
-      // สุ่มคำจาก Pool มา 3 คำ
-      const words = [...pool].sort(() => 0.5 - Math.random()).slice(0, 3);
-      let idx = 0;
-
-      function update() {
-        cv.innerHTML = `<div style="margin-top:60px"><div style="font-size:2rem; color:var(--neon); margin-bottom:15px">${words[idx]}</div><input type="text" id="typer" autofocus autocomplete="off"></div>`;
-        const input = document.getElementById("typer");
-        input.focus();
-        input.oninput = (e) => {
-          if (e.target.value === words[idx]) {
-            idx++;
-            if (idx < words.length) update();
-            else finishStage();
-          }
-        };
-      }
-      update();
+        const words = ["Cybersecurity", "Behavioral", "Authentication"];
+        let idx = 0;
+        function update() {
+            cv.innerHTML = `<div style="margin-top:60px"><div style="font-size:2rem; color:var(--neon); margin-bottom:15px">${words[idx]}</div><input type="text" id="typer" autofocus autocomplete="off"></div>`;
+            const input = document.getElementById("typer");
+            input.focus();
+            input.oninput = (e) => { if (e.target.value === words[idx]) { idx++; if (idx < words.length) update(); else finishStage(); } };
+        }
+        update();
     }
 
     function initKeyRhythm(cv) {
-        let count = 0;
-        const keys = ["F", "J", "Space", "K", "D"];
-        
+        let count = 0; const keys = ["F", "J", "Space"];
         function next() {
             let k = keys[count];
-            cv.innerHTML = `<div style="margin-top:60px"><p>กดปุ่มค้างไว้จนกว่าวงกลมจะเต็ม</p><div class="key-hint">${k === "Space" ? "⎵" : k}</div><div id="keyProg" style="width:0%; height:10px; background:var(--neon); margin:20px auto; border-radius:5px;"></div></div>`;
-            
-            let pressing = false;
-            let progress = 0;
-            let interval = null;
-
-            const handleDown = (e) => {
-                let targetKey = k === "Space" ? " " : k.toLowerCase();
-                if (e.key.toLowerCase() === targetKey && !pressing) {
+            cv.innerHTML = `<div style="margin-top:60px"><p>กดค้างจนกว่าจะเต็ม</p><div class="key-hint">${k==="Space"?"⎵":k}</div><div id="keyProg" style="width:0%; height:10px; background:var(--neon); margin:20px auto; border-radius:5px;"></div></div>`;
+            let pressing = false, progress = 0, interval = null;
+            const down = (e) => {
+                let target = k === "Space" ? " " : k.toLowerCase();
+                if (e.key.toLowerCase() === target && !pressing) {
                     pressing = true;
                     interval = setInterval(() => {
-                        progress += 2;
-                        document.getElementById("keyProg").style.width = progress + "%";
+                        progress += 2; document.getElementById("keyProg").style.width = progress + "%";
                         if (progress >= 100) {
-                            clearInterval(interval);
-                            window.removeEventListener("keydown", handleDown);
-                            window.removeEventListener("keyup", handleUp);
-                            count++;
-                            if (count < keys.length) next();
-                            else finishStage();
+                            clearInterval(interval); window.removeEventListener("keydown", down); window.removeEventListener("keyup", up);
+                            count++; if (count < keys.length) next(); else finishStage();
                         }
                     }, 20);
                 }
             };
-
-            const handleUp = (e) => {
-                let targetKey = k === "Space" ? " " : k.toLowerCase();
-                if (e.key.toLowerCase() === targetKey) {
-                    pressing = false;
-                    clearInterval(interval);
-                    progress = 0;
-                    if (document.getElementById("keyProg")) document.getElementById("keyProg").style.width = "0%";
-                }
-            };
-
-            window.addEventListener("keydown", handleDown);
-            window.addEventListener("keyup", handleUp);
+            const up = (e) => { if (e.key.toLowerCase() === (k==="Space"?" ":k.toLowerCase())) { pressing = false; clearInterval(interval); progress = 0; if(document.getElementById("keyProg")) document.getElementById("keyProg").style.width = "0%"; } };
+            window.addEventListener("keydown", down); window.addEventListener("keyup", up);
         }
         next();
     }
 
     function initSteadyPath(cv) {
-      cv.innerHTML = `<div class="maze-container" id="mazeCont"><svg width="100%" height="100%" viewBox="0 0 600 360" preserveAspectRatio="xMidYMid meet" style="position:absolute;"><path class="maze-road" d="M 100 60 H 500 V 180 H 100 V 300 H 500" /><path id="mazeTrigger" class="maze-trigger" d="M 100 60 H 500 V 180 H 100 V 300 H 500" /></svg><div id="start-node" class="maze-point" style="left:150px; top:60px; background:var(--accent);">START</div><div id="goal-node" class="maze-point" style="left:580px; top:300px; background:var(--neon); color:#000;">GOAL</div></div>`;
-      const trig = document.getElementById("mazeTrigger");
-      const goal = document.getElementById("goal-node");
-      trig.onmouseleave = (e) => {
-        if (e.relatedTarget !== goal) alert("⚠️ มือสั่น! กรุณาเริ่มใหม่จากจุด START");
-      };
-      goal.onmouseenter = () => {
-        trig.onmouseleave = null;
-        finishStage();
-      };
+        cv.innerHTML = `<div class="maze-container"><svg width="100%" height="100%" viewBox="0 0 600 360"><path class="maze-road" d="M 100 60 H 500 V 180 H 100 V 300 H 500" /><path id="mazeTrigger" class="maze-trigger" d="M 100 60 H 500 V 180 H 100 V 300 H 500" /></svg><div id="start-node" class="maze-point" style="left:150px; top:60px; background:var(--accent);">START</div><div id="goal-node" class="maze-point" style="left:580px; top:300px; background:var(--neon); color:#000;">GOAL</div></div>`;
+        const trig = document.getElementById("mazeTrigger"), goal = document.getElementById("goal-node");
+        trig.onmouseleave = (e) => { if (e.relatedTarget !== goal) alert("⚠️ มือสั่น! เริ่มใหม่จากจุด START"); };
+        goal.onmouseenter = () => { trig.onmouseleave = null; finishStage(); };
     }
 
+    // --- Data Export with 0-1 Scaling ---
     async function autoExportData() {
-      const status = document.getElementById("save-status");
-      const msg = document.getElementById("final-msg");
-      status.innerText = "⏳ กำลังบันทึกข้อมูล...";
-      const totalTimeSec = (Date.now() - sessionStart) / 1000;
-      const idleSum = idleDurations.reduce((a, b) => a + b, 0) / 1000;
-      const idleRatio = idleSum / totalTimeSec;
-      const interactionDensity = (mouseIntervals.length + clickIntervals.length + keyIntervals.length) / totalTimeSec;
+        const status = document.getElementById("save-status");
+        const msg = document.getElementById("final-msg");
+        status.innerText = "⏳ กำลังบันทึกข้อมูลแบบ Normalized...";
 
-      const payload = {
-        mouse_data: getStats(mouseIntervals, "mouse"),
-        click_data: getStats(clickIntervals, "click"),
-        key_data: getStats(keyIntervals),
-        idle_data: getStats(idleDurations),
-        features: {
-          idle_ratio: parseFloat(idleRatio.toFixed(4)),
-          density: parseFloat(interactionDensity.toFixed(2))
-        }
-      };
+        const totalTimeSec = (Date.now() - sessionStart) / 1000;
+        const idleSum = idleDurations.reduce((a, b) => a + b, 0) / 1000;
+        const idleRatio = idleSum / totalTimeSec;
+        const density = (mouseIntervals.length + clickIntervals.length + keyIntervals.length) / totalTimeSec;
 
-      try {
-        const res = await fetch("/api/save", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-        if (res.ok) {
-          status.style.color = "var(--neon)";
-          status.innerText = "✅ บันทึกสำเร็จ!";
-          msg.innerText = "ข้อมูลพฤติกรรมถูกส่งไปยังระบบเรียบร้อยแล้ว";
-        } else {
-          throw new Error("Server Error");
+        const payload = {
+            mouse_data: getStats(mouseIntervals, "mouse"),
+            click_data: getStats(clickIntervals, "click"),
+            key_data: getStats(keyIntervals, "key"),
+            idle_data: getStats(idleDurations, "idle"),
+            features: {
+                idle_ratio: parseFloat(idleRatio.toFixed(4)),
+                density: parseFloat(density.toFixed(2))
+            }
+        };
+
+        console.log("Normalized Payload:", payload);
+
+        try {
+            const res = await fetch("/api/save", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                status.style.color = "var(--neon)";
+                status.innerText = "✅ บันทึกสำเร็จ (Scaled 0-1)";
+                msg.innerText = "ข้อมูลพฤติกรรมที่ปรับจูนแล้วถูกส่งเข้าระบบแล้ว";
+            } else { throw new Error("Server Error"); }
+        } catch (err) {
+            status.style.color = "var(--accent)";
+            status.innerText = "❌ ผิดพลาด: " + err.message;
+            msg.innerHTML = `<button class="main-btn" onclick="autoExportData()">ลองใหม่</button>`;
         }
-      } catch (err) {
-        status.style.color = "var(--accent)";
-        status.innerText = "❌ ผิดพลาด: " + err.message;
-        msg.innerHTML = `<button class="main-btn" onclick="autoExportData()">ลองส่งอีกครั้ง</button>`;
-      }
     }
-    renderStage();
-  </script>
-</body>
 
+    renderStage();
+</script>
+</body>
 </html>
