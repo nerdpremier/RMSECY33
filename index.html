@@ -191,17 +191,17 @@
         return arr.filter(v => v >= (Q1 - 1.5 * IQR) && v <= (Q3 + 1.5 * IQR));
     }
 
-    // --- Stats & Scaling Engine ---
+    // --- Stats & Scaling Engine (UPDATED) ---
     function getStats(raw, type = "general") {
-        const result = { mean: 0, std: 0, variance: 0, count: 0, scaled: { mean: 0, std: 0 } };
-        if (!raw || raw.length < 2) return result;
+        const fallback = { m: 0, s: 0 };
+        if (!raw || raw.length < 2) return fallback;
 
         let filtered = raw;
         if (type === "click") filtered = raw.filter(v => v >= 60);
         if (type === "mouse") filtered = raw.filter(v => v >= 1);
 
         let f = removeOutliers(filtered);
-        if (f.length < 2) return result;
+        if (f.length < 2) return fallback;
 
         let m = f.reduce((a, b) => a + b, 0) / f.length;
         let v = f.reduce((a, b) => a + (b - m) ** 2, 0) / f.length;
@@ -221,14 +221,8 @@
         const scaled_s = Math.min(Math.max(s / L.max_s, 0), 1);
 
         return {
-            mean: Math.round(m),
-            std: Math.round(s),
-            variance: Math.round(v),
-            count: f.length,
-            scaled: {
-                mean: parseFloat(scaled_m.toFixed(4)),
-                std: parseFloat(scaled_s.toFixed(4))
-            }
+            m: parseFloat(scaled_m.toFixed(4)),
+            s: parseFloat(scaled_s.toFixed(4))
         };
     }
 
@@ -355,7 +349,7 @@
         goal.onmouseenter = () => { trig.onmouseleave = null; finishStage(); };
     }
 
-    // --- Data Export with 0-1 Scaling ---
+    // --- Data Export with 0-1 Scaling (UPDATED) ---
     async function autoExportData() {
         const status = document.getElementById("save-status");
         const msg = document.getElementById("final-msg");
@@ -364,16 +358,16 @@
         const totalTimeSec = (Date.now() - sessionStart) / 1000;
         const idleSum = idleDurations.reduce((a, b) => a + b, 0) / 1000;
         const idleRatio = idleSum / totalTimeSec;
-        const density = (mouseIntervals.length + clickIntervals.length + keyIntervals.length) / totalTimeSec;
+        const rawDensity = (mouseIntervals.length + clickIntervals.length + keyIntervals.length) / totalTimeSec;
 
         const payload = {
-            mouse_data: getStats(mouseIntervals, "mouse"),
-            click_data: getStats(clickIntervals, "click"),
-            key_data: getStats(keyIntervals, "key"),
-            idle_data: getStats(idleDurations, "idle"),
+            mouse: getStats(mouseIntervals, "mouse"),
+            click: getStats(clickIntervals, "click"),
+            key: getStats(keyIntervals, "key"),
+            idle: getStats(idleDurations, "idle"),
             features: {
-                idle_ratio: parseFloat(idleRatio.toFixed(4)),
-                density: parseFloat(density.toFixed(2))
+                density: parseFloat((rawDensity / 100).toFixed(4)), // ปรับสเกลให้อยู่ในระยะ 0-1
+                idle_ratio: parseFloat(idleRatio.toFixed(4))
             }
         };
 

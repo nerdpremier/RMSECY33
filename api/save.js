@@ -12,19 +12,21 @@ export default async function handler(req, res) {
   });
 
   try {
-    const data = req.body;
     await client.connect();
+    const data = req.body;
 
+    // แก้ไขชื่อคอลัมน์ให้เหลือแค่ mouse, click, key, idle ตามที่คุณต้องการ
     const query = `
-      INSERT INTO behavior_logs (mouse_data, click_data, key_data, idle_data, features) 
+      INSERT INTO behavior_logs (mouse, click, key, idle, features) 
       VALUES ($1, $2, $3, $4, $5)
     `;
     
+    // ดึงค่าจาก req.body ที่ส่งมาจาก Frontend
     const values = [
-      data.mouse_data || {},
-      data.click_data || {},
-      data.key_data || {},
-      data.idle_data || {},
+      data.mouse || {},  
+      data.click || {},  
+      data.key || {},    
+      data.idle || {},   
       data.features || {}
     ];
 
@@ -35,7 +37,7 @@ export default async function handler(req, res) {
 
   } catch (err) {
     if (client) {
-      try { await client.end(); } catch (e) {}
+      try { await client.end(); } catch (e) { console.error("Error closing client:", e); }
     }
     console.error("DB Error:", err.message);
     return res.status(500).json({ error: err.message });
