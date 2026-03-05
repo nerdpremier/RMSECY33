@@ -190,8 +190,8 @@ function initSteadyPath(cv) {
                 <path class="maze-road" d="M 100 60 H 500 V 180 H 100 V 300 H 500" />
                 <path id="mazeTrigger" class="maze-trigger" d="M 100 60 H 500 V 180 H 100 V 300 H 500" />
             </svg>
-            <div id="start-node" class="maze-point" style="left:100px; top:60px; background:var(--accent); box-shadow: 0 0 15px var(--accent);">START</div>
-            <div id="goal-node" class="maze-point" style="left:500px; top:300px; background:var(--neon); color:#000;">GOAL</div>
+            <div id="start-node" class="maze-point" style="left:150px; top:60px; background:var(--accent); box-shadow: 0 0 15px var(--accent);">START</div>
+            <div id="goal-node" class="maze-point" style="left:580px; top:300px; background:var(--neon); color:#000;">GOAL</div>
         </div>
     `;
 
