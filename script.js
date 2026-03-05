@@ -273,7 +273,7 @@ function initSteadyPath(cv) {
 async function autoExportData() {
     const status = document.getElementById("save-status");
     const msg = document.getElementById("final-msg");
-    status.innerText = "⏳ กำลังบันทึกข้อมูลแบบ 3-Decimal...";
+    status.innerText = "⏳ กำลังบันทึกข้อมูล ...";
 
     const totalTimeSec = (Date.now() - sessionStart) / 1000;
     const idleSum = idleDurations.reduce((a, b) => a + b, 0) / 1000;
