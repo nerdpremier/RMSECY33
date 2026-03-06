@@ -72,11 +72,11 @@ function getStats(raw, type = "general") {
 
 // --- Game Engine ---
 const stages = [
-    { name: "🎯 Click Hunt", desc: "คลิกเป้าหมาย 10 จุด", type: "click" },
-    { name: "🛸 Orbital", desc: "ลากเมาส์ตามเป้าหมาย", time: 10, type: "move" },
-    { name: "⌨️ Speed Typer", desc: "พิมพ์คำที่ปรากฏให้ถูกต้อง", type: "type" },
-    { name: "🎹 Rhythm Keeper", desc: "กดปุ่มค้าง", type: "key_rhythm" },
-    { name: "🖋️ Steady Hand", desc: "ลากเมาส์ตามทาง: ห้ามออกนอกกรอบ!", type: "steady_path" }
+    { name: "คลิกเป้าหมาย 10 จุด 🎯", desc: "", type: "click" },
+    { name: "ลากเมาส์ตามเป้าหมาย 🛸", desc: "", time: 10, type: "move" },
+    { name: "พิมพ์คำที่ปรากฏให้ถูกต้อง ⌨️", desc: "", type: "type" },
+    { name: "กดปุ่มค้าง 🎹", desc: "", type: "key_rhythm" },
+    { name: "ลากเมาส์ตามทาง: ห้ามออกนอกเส้นทาง 🖋️", desc: "", type: "steady_path" }
 ];
 let currentStage = 0, timer = null;
 
