@@ -151,6 +151,19 @@ input#typer {
     letter-spacing: 1px;
 }
 
+/* เส้นทางที่ลากผ่านแล้ว */
+.maze-progress {
+    fill: none;
+    stroke: var(--neon);
+    stroke-width: 45;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 2000; /* ตั้งค่าความยาวเส้นเผื่อไว้ */
+    stroke-dashoffset: 2000; /* ซ่อนเส้นไว้ก่อน */
+    transition: stroke-dashoffset 0.1s linear;
+    pointer-events: none; /* ไม่ให้ขวางการตรวจจับเมาส์ */
+}
+
 .maze-container { position: relative; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
 .maze-road { fill: none; stroke: rgba(255, 255, 255, 0.15); stroke-width: 45; stroke-linecap: round; stroke-linejoin: round; }
 .maze-trigger { fill: none; stroke: transparent; stroke-width: 55; pointer-events: stroke; stroke-linecap: round; stroke-linejoin: round; }

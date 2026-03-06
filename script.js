@@ -223,48 +223,78 @@ function initSteadyPath(cv) {
         <div class="maze-container">
             <svg width="100%" height="100%" viewBox="0 0 600 360">
                 <path class="maze-road" d="M 100 60 H 500 V 180 H 100 V 300 H 500" />
+                <path id="mazeProgress" class="maze-progress" d="M 100 60 H 500 V 180 H 100 V 300 H 500" />
                 <path id="mazeTrigger" class="maze-trigger" d="M 100 60 H 500 V 180 H 100 V 300 H 500" />
             </svg>
-            <div id="start-node" class="maze-point" style="left:150px; top:60px; background:var(--accent); box-shadow: 0 0 15px var(--accent);">START</div>
-            <div id="goal-node" class="maze-point" style="left:580px; top:300px; background:var(--neon); color:#000;">GOAL</div>
+            <div id="start-node" class="maze-point" style="left:100px; top:60px; background:var(--accent); box-shadow: 0 0 15px var(--accent);">START</div>
+            <div id="goal-node" class="maze-point" style="left:500px; top:300px; background:var(--neon); color:#000;">GOAL</div>
         </div>
     `;
 
     const trig = document.getElementById("mazeTrigger");
+    const progressPath = document.getElementById("mazeProgress");
     const goal = document.getElementById("goal-node");
     const start = document.getElementById("start-node");
+    
+    // เตรียมความยาวเส้น
+    const pathLength = progressPath.getTotalLength();
+    progressPath.style.strokeDasharray = pathLength;
+    progressPath.style.strokeDashoffset = pathLength;
+
     let isStarted = false;
 
-    // เริ่มเกมเมื่อเมาส์อยู่ที่จุด START
+    // ฟังก์ชันอัปเดตเส้นสีเขียวตามตำแหน่งเมาส์
+    trig.onmousemove = (e) => {
+        if (!isStarted) return;
+        
+        // คำนวณหาจุดที่ใกล้ที่สุดบนเส้น SVG เทียบกับพิกัดเมาส์
+        const svg = trig.ownerSVGElement;
+        const pt = svg.createSVGPoint();
+        pt.x = e.clientX;
+        pt.y = e.clientY;
+        const loc = pt.matrixTransform(svg.getScreenCTM().inverse());
+        
+        // หาจุดที่ใกล้ที่สุดบน Path เพื่อเอาค่าระยะทาง (Distance)
+        // หมายเหตุ: วิธีนี้เป็นแบบประมาณการที่เร็วและลื่นไหล
+        const totalSteps = 200; 
+        let minDest = Infinity;
+        let bestLength = 0;
+        
+        for (let i = 0; i <= totalSteps; i++) {
+            let l = (i / totalSteps) * pathLength;
+            let p = progressPath.getPointAtLength(l);
+            let d = Math.sqrt((loc.x - p.x)**2 + (loc.y - p.y)**2);
+            if (d < minDest) {
+                minDest = d;
+                bestLength = l;
+            }
+        }
+        
+        // อัปเดตเส้น Progress (วาดเส้นออกมาตามระยะที่เมาส์ลากไปถึง)
+        progressPath.style.strokeDashoffset = pathLength - bestLength;
+    };
+
     start.onmouseenter = () => {
         isStarted = true;
         start.style.background = "var(--neon)";
-        start.style.boxShadow = "0 0 20px var(--neon)";
         start.innerText = "GO!";
     };
 
-    // ถ้าเมาส์หลุดออกจากเส้นทาง (mazeTrigger)
     trig.onmouseleave = (e) => {
         if (isStarted && e.relatedTarget !== goal) {
             isStarted = false;
-            // ทำ Effect กระพริบสีแดงที่จุด Start เพื่อบอกให้กลับไปเริ่มใหม่
+            // รีเซ็ตเส้นกลับเป็น 0
+            progressPath.style.strokeDashoffset = pathLength;
             start.style.background = "red";
-            start.style.boxShadow = "0 0 30px red";
             start.innerText = "RETRY";
-            
-            // ใส่ Delay เล็กน้อยก่อนกลับเป็นสีปกติ
-            setTimeout(() => {
-                start.style.background = "var(--accent)";
-                start.style.boxShadow = "0 0 15px var(--accent)";
-            }, 500);
+            setTimeout(() => { start.style.background = "var(--accent)"; }, 500);
         }
     };
 
-    // ชนะเมื่อถึงจุด GOAL และต้องเริ่มมาจากจุด START เท่านั้น
     goal.onmouseenter = () => {
         if (isStarted) {
             isStarted = false;
-            trig.onmouseleave = null;
+            progressPath.style.strokeDashoffset = 0; // เติมให้เต็ม
             finishStage();
         }
     };
