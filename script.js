@@ -75,7 +75,7 @@ const stages = [
     { name: "คลิกเป้าหมาย 10 จุด 🎯", desc: "", type: "click" },
     { name: "ลากเมาส์ตามเป้าหมาย 🛸", desc: "", time: 10, type: "move" },
     { name: "พิมพ์คำที่ปรากฏให้ถูกต้อง ⌨️", desc: "", type: "type" },
-    { name: "กดปุ่มค้าง 🎹", desc: "", type: "key_rhythm" },
+    { name: "กดปุ่มที่คีย์บอร์ดค้าง 🎹", desc: "", type: "key_rhythm" },
     { name: "ลากเมาส์ตามทาง: ห้ามออกนอกเส้นทาง 🖋️", desc: "", type: "steady_path" }
 ];
 let currentStage = 0, timer = null;
