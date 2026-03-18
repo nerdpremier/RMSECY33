@@ -1,0 +1,36 @@
+{
+  "model_version": "v1-logreg",
+  "type": "logistic_regression",
+  "features": [
+    "idle_ratio",
+    "interaction_density",
+    "event_count",
+    "avg_mouse_speed",
+    "mouse_dir_change_rate",
+    "avg_click_interval_ms",
+    "std_click_interval_ms",
+    "avg_key_interval_ms",
+    "std_key_interval_ms",
+    "avg_scroll_abs_dy",
+    "scroll_dir_change_rate"
+  ],
+  "weights": {
+    "idle_ratio": 1.6,
+    "interaction_density": 0.6,
+    "event_count": 0.04,
+    "avg_mouse_speed": 0.01,
+    "mouse_dir_change_rate": 0.8,
+    "avg_click_interval_ms": -0.001,
+    "std_click_interval_ms": 0.002,
+    "avg_key_interval_ms": -0.001,
+    "std_key_interval_ms": 0.002,
+    "avg_scroll_abs_dy": 0.001,
+    "scroll_dir_change_rate": 0.7
+  },
+  "bias": -2.0,
+  "thresholds": {
+    "medium": 0.55,
+    "revoke": 0.82
+  }
+}
+
